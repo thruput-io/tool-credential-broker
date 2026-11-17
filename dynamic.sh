@@ -1,16 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ensure_bash5() {
-  if (( BASH_VERSINFO[0] < 5 )); then
-    echo "Error: Bash 5 or higher is required, found ${BASH_VERSION}. Put the Homebrew bash first in PATH." >&2
-    exit 1
-  fi
-}
-
 required() {
   for var_name in "$@"; do
-    if [[ ! -v $var_name || -z ${!var_name} ]]; then
+    if [ -z "${!var_name}" ]; then
       echo "Error: Environment variable '$var_name' is required but unset or empty." >&2
       exit 1
     fi

@@ -68,7 +68,6 @@ $(ROOT_DIR)/build/semgrep.txt: $(ROOT_DIR)/build/tools.txt
 
 $(ROOT_DIR)/build/versions.txt: $(ROOT_DIR)/build/config.mk
 	@mkdir -p $(@D)
-	source $(ROOT_DIR)/dynamic.sh && ensure_bash5
 	$(ROOT_DIR)/scripts/versions.sh > $@
 
 $(ROOT_DIR)/build/setup.txt: $(ROOT_DIR)/build/tools.txt $(ROOT_DIR)/build/semgrep.txt $(ROOT_DIR)/build/versions.txt
