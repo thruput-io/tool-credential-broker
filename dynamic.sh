@@ -10,7 +10,7 @@ ensure_bash5() {
 
 required() {
   for var_name in "$@"; do
-    if [[ -z "${!var_name:-}" ]]; then
+    if [[ ! -v $var_name || -z ${!var_name} ]]; then
       echo "Error: Environment variable '$var_name' is required but unset or empty." >&2
       exit 1
     fi
@@ -32,10 +32,10 @@ expose() {
   done
 }
 
-required ROOT_DIR
+required ROOT_DIR BUILD_NUMBER
 source "$ROOT_DIR/constants.env"
 
-VERSION=$(< "$ROOT_DIR/version.txt").${BUILD_NUMBER:-0}
+VERSION=$(< "$ROOT_DIR/version.txt").$BUILD_NUMBER
 
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 

@@ -1,6 +1,6 @@
 bats_require_minimum_version 1.5.0
 
-load "$ROOT_DIR/scripts/test/helper"
+load "$ROOT_DIR/scripts/test/lib/helper"
 
 setup() {
   root=$ROOT_DIR
@@ -21,13 +21,13 @@ putting() {
 getting() {
   key=$1
   export key
-  format secret-get-request.schema.json key | secret-get --with-key
+  format secret-get-request.schema.json key | secret-get
 }
 
 getting_version() {
   key=$1 version=$2
   export key version
-  format secret-get-request-version.schema.json key version | secret-get
+  format secret-get-request-version.schema.json key version | secret-get-version
 }
 @test "storing a secret answers with version and value" {
   run -0 --separate-stderr putting johans-laptop/github super-1
@@ -159,7 +159,7 @@ LITERAL
 }
 
 @test "asking with no key at all is refused" {
-  run -1 --separate-stderr sh -c 'printf %s "{}" | secret-get --with-key'
+  run -1 --separate-stderr sh -c 'printf %s "{}" | secret-get'
   [ "$output" = "" ]
   expected=$(printf 'parse: the document does not satisfy secret-get-request.schema.json\nvalidating https://thruput.io/gettoken/secret-request.schema.json: required: missing properties: ["key"]')
   assert_equal "$(without_kcov_trace "$stderr")" "$expected"

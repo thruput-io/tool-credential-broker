@@ -25,6 +25,7 @@ jobs:
       - run: apt-get update && apt-get install -y --no-install-recommends make git ca-certificates
       - uses: actions/checkout@v4
       - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - run: make setup
       - run: make build
       - if: always()
         uses: ./.github/actions/upload-reports
@@ -42,6 +43,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: brew install make
+      - run: gmake setup
       - run: gmake build
       - if: always()
         uses: ./.github/actions/upload-reports

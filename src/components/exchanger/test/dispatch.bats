@@ -1,21 +1,23 @@
 bats_require_minimum_version 1.5.0
 
-load "$ROOT_DIR/scripts/test/helper"
+load "$ROOT_DIR/scripts/test/lib/helper"
 
 setup() {
   root=$ROOT_DIR
-  STORE_DIR=$(mktemp -d)
+  cd "$BATS_TEST_TMPDIR" || exit 1
+  STORE_DIR=$BATS_TEST_TMPDIR/store
+  EXCHANGER_DIR=$BATS_TEST_TMPDIR/$(sed -n 's/^exchangers=//p' "$root/src/components/exchanger/exchanger")
+  mkdir -p "$STORE_DIR" "$EXCHANGER_DIR"
   PATH="$STORE_DIR:$root/src/components/exchanger:$root/build/bin:$PATH"
-  EXCHANGER_DIR=$(mktemp -d)
   CONTRACTS_DIR="$root/src/contracts"
   ASKED_FILE="$STORE_DIR/asked"
   ARGS_FILE="$STORE_DIR/args"
   RAN_FILE="$STORE_DIR/the-plugin-ran"
-  export PATH EXCHANGER_DIR CONTRACTS_DIR ASKED_FILE ARGS_FILE RAN_FILE
+  export PATH CONTRACTS_DIR ASKED_FILE ARGS_FILE RAN_FILE
   holding super-sample-token-123
 }
 
-teardown() { rm -rf "$EXCHANGER_DIR" "$STORE_DIR"; }
+teardown() { :; }
 
 holding() {
   STORED=$1
@@ -39,8 +41,7 @@ holding_nothing() {
 }
 
 plugged_in() {
-  printf '%s\n' '#!/bin/sh' 'set -eu' "$2" > "$EXCHANGER_DIR/$1"
-  chmod 755 "$EXCHANGER_DIR/$1"
+  printf '%s\n' 'exchange() {' "  $2" '}' > "$EXCHANGER_DIR/$1.sh"
 }
 
 exchanging() {
@@ -85,7 +86,7 @@ exchanging() {
   run -0 --separate-stderr exchanging integrationtest/ci/run
   [ "$(printf '%s' "$output" | jq -r '.access_token')" = "narrow-token" ]
   [ "$(jq -r '.key' < "$ASKED_FILE")" = "host-privileged/integrationtest" ]
-  [ "$(cat "$ARGS_FILE")" = "--with-key" ]
+  [ "$(cat "$ARGS_FILE")" = "" ]
   assert_equal "$(without_kcov_trace "$stderr")" ""
 }
 

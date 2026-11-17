@@ -1,6 +1,6 @@
 bats_require_minimum_version 1.5.0
 
-load "$ROOT_DIR/scripts/test/helper"
+load "$ROOT_DIR/scripts/test/lib/helper"
 
 setup() {
   root=$ROOT_DIR
@@ -34,7 +34,7 @@ putting_a_secret() {
 
 getting_the_secret() {
   jq -nc '{key:"host-privileged/integrationtest"}' \
-    | HOME="$home" PATH="$root/build/bin:$PATH" "$built/components/secret-manager/secret-get" --with-key
+    | HOME="$home" PATH="$root/build/bin:$PATH" "$built/components/secret-manager/secret-get"
 }
 
 parsing_without_being_told_where_contracts_are() {
@@ -61,8 +61,8 @@ EOF
 @test "the exchanger runs the plugins in the library directory it was built for" {
   built_for configured "prefix=$there"
   mkdir -p "$there/lib/gettoken/exchangers"
-  installed_as "$there/lib/gettoken/exchangers/integrationtest" <<'EOF'
-cat > /dev/null; echo from-the-library-directory
+  cat > "$there/lib/gettoken/exchangers/integrationtest.sh" <<'EOF'
+exchange() { cat > /dev/null; echo from-the-library-directory; }
 EOF
   installed_as "$stubs/secret-get" <<'EOF'
 version=0; value=super-sample; export version value; format secret-get-response.schema.json version value
@@ -96,13 +96,13 @@ EOF
 @test "built for /usr, the components look where Debian installs" {
   built_for configured prefix=/usr
   [ "$(directory_named_in tools/gettoken/bin/gettoken 's|^PATH="\([^:]*\):.*|\1|p')" = "/usr/lib/gettoken" ]
-  [ "$(directory_named_in components/exchanger/exchanger 's|^plugins=.*:-\(.*\)}$|\1|p')" = "/usr/lib/gettoken/exchangers" ]
+  [ "$(directory_named_in components/exchanger/exchanger 's|^exchangers=\(.*\)$|\1|p')" = "/usr/lib/gettoken/exchangers" ]
   [ "$(directory_named_in components/contract/contract.go 's|^[[:space:]]*return "\(.*/contracts\)"$|\1|p')" = "/usr/share/gettoken/contracts" ]
 }
 
 @test "a built tree leaves no directory undecided" {
   built_for configured "prefix=$there"
-  run -1 --separate-stderr grep -rlE '@(libdir|datadir)@' "$built/tools" "$built/components"
+  run -1 --separate-stderr grep -rlE '__(LIBDIR|DATADIR)__' "$built/tools" "$built/components"
   [ "$output" = "" ]
   assert_equal "$(without_kcov_trace "$stderr")" ""
 }

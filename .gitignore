@@ -5,4 +5,5 @@ config.local.mk
 .idea/
 .agents/
 .claude/
+.log/
 skills-lock.json

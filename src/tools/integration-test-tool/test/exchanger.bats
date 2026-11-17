@@ -1,21 +1,23 @@
 bats_require_minimum_version 1.5.0
 
-load "$ROOT_DIR/scripts/test/helper"
+load "$ROOT_DIR/scripts/test/lib/helper"
 
 setup() {
   root=$ROOT_DIR
   STORE_DIR=$(mktemp -d)
-  PATH="$STORE_DIR:$root/src/tools/integration-test-tool/privileged/exchangers:$PATH"
+  PATH="$STORE_DIR:$PATH"
   STORE_ASKED_FILE="$STORE_DIR/the-store-was-asked"
   export PATH STORE_ASKED_FILE
   printf '%s\n' '#!/bin/sh' 'set -eu' "touch \"\$STORE_ASKED_FILE\"" 'exit 1' > "$STORE_DIR/secret-get"
   chmod 755 "$STORE_DIR/secret-get"
+  # shellcheck source=src/tools/integration-test-tool/privileged/lib/exchangers/integrationtest.sh
+  source "$root/src/tools/integration-test-tool/privileged/lib/exchangers/integrationtest.sh"
 }
 
 teardown() { rm -rf "$STORE_DIR"; }
 
 trading() {
-  printf '%s' "$2" | integrationtest "$1"
+  printf '%s' "$2" | exchange "$1"
 }
 
 @test "the narrow token carries the secret it was handed, not what the plugin expected" {

@@ -92,8 +92,8 @@ which holds what belongs to no tool. It does so before `dpkg` reads anything,
 because `dpkg` resolves build dependencies out of `debian/control` before any
 rule could act.
 
-A component never spells out where it is installed. It names `@libdir@` or
-`@datadir@`, and the Makefile beside the source fills them in from `prefix`,
+A component never spells out where it is installed. It names `__LIBDIR__` or
+`__DATADIR__`, and the Makefile beside the source fills them in from `prefix`,
 with the defaults the GNU coding standards give them. The Debian rules build
 for `/usr`; a formula builds for the Homebrew prefix. Run from a checkout
 nothing is filled in, and the tests name the directories they need through the

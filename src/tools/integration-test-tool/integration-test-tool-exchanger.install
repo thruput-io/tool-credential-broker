@@ -1,1 +1,1 @@
-tools/integration-test-tool/privileged/exchangers/integrationtest usr/lib/gettoken/exchangers
+tools/integration-test-tool/privileged/lib/exchangers/integrationtest.sh usr/lib/gettoken/exchangers

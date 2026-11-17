@@ -17,7 +17,7 @@ configured: build/configured
 
 build/configured: $(naming_an_installation_directory)
 	set -e; for named in $(naming_an_installation_directory); do \
-	  sed -e 's|@libdir@|$(libdir)|g' -e 's|@datadir@|$(datadir)|g' "$$named" > "$$named.configured"; \
+	  sed -e 's|__LIBDIR__|$(libdir)|g' -e 's|__DATADIR__|$(datadir)|g' "$$named" > "$$named.configured"; \
 	  cat "$$named.configured" > "$$named"; \
 	  rm "$$named.configured"; \
 	done

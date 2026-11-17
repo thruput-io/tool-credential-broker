@@ -71,7 +71,7 @@ func Directory() string {
 	if named := os.Getenv("CONTRACTS_DIR"); named != "" {
 		return named
 	}
-	return "@datadir@/gettoken/contracts"
+	return "__DATADIR__/gettoken/contracts"
 }
 
 func read(directory, name string) (*jsonschema.Schema, error) {

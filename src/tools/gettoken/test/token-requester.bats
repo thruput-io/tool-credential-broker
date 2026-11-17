@@ -1,6 +1,6 @@
 bats_require_minimum_version 1.5.0
 
-load "$ROOT_DIR/scripts/test/helper"
+load "$ROOT_DIR/scripts/test/lib/helper"
 
 setup() {
   root=$ROOT_DIR
@@ -65,6 +65,10 @@ asking() {
   assert_equal "$(without_kcov_trace "$stderr")" "$expected"
 }
 
+asking_for_the_list() {
+  printf '%s' '{"query":"list"}' | entitlements-requester
+}
+
 @test "the list is asked for by who is asking and from where, and handed back whole" {
   cat > "$stub/entitlements" <<'STUB'
 #!/bin/sh
@@ -72,7 +76,7 @@ cat > "$REQUEST_FILE"
 printf '%s\n' '{"entitlements":[]}'
 STUB
   chmod 755 "$stub/entitlements"
-  run -0 --separate-stderr sh -c 'printf %s "{\"query\":\"list\"}" | token-requester --list'
+  run -0 --separate-stderr asking_for_the_list
   [ "$output" = '{"entitlements":[]}' ]
   assert_equal "$(without_kcov_trace "$stderr")" ""
   [ "$(cat "$REQUEST_FILE")" = "{\"doing\":\"$(hostname)\",\"signed\":\"host-privileged\",\"who\":\"$(id -un)\"}" ]
