@@ -4,24 +4,24 @@ set -euo pipefail
 into=${1:?deliver-brew.sh: name a directory to deliver the formulae into}
 version=${VERSION:?deliver-brew.sh: name the VERSION}
 
-root=$(CDPATH='' cd "$(dirname "$0")/.." && pwd)
+: "${ROOT_DIR:?deliver-brew.sh: name the ROOT_DIR}"
 
-build=$root/build/package/brew
+build=$ROOT_DIR/build/package/brew
 rm -rf "$build"
 mkdir -p "$build"
 
 name=gettoken-$version
-cp -a "$root/src" "$build/$name"
-cp "$root/README.md" "$build/$name/README.md"
+cp -a "$ROOT_DIR/src" "$build/$name"
+cp "$ROOT_DIR/README.md" "$build/$name/README.md"
 
 mkdir -p "$into"
-into=$(CDPATH='' cd "$into" && pwd)
+into=$(realpath "$into")
 
 tarball=$into/$name.tar.gz
 COPYFILE_DISABLE=1 tar -czf "$tarball" -C "$build" "$name"
 sha256=$(shasum -a 256 < "$tarball" | cut -d" " -f1)
 
-BREW_URL="file://$tarball" BREW_SHA256="$sha256" "$root/scripts/packaging.sh" "$build/$name"
+BREW_URL="file://$tarball" BREW_SHA256="$sha256" "$ROOT_DIR/scripts/packaging.sh" "$build/$name"
 
 rm -f -- "$into"/*.rb
 cp "$build/$name"/Formula/*.rb "$into"

@@ -4,7 +4,6 @@ load "$ROOT_DIR/scripts/test/lib/helper"
 
 setup() {
   root=$ROOT_DIR
-  cd "$BATS_TEST_TMPDIR" || exit 1
   STORE_DIR=$BATS_TEST_TMPDIR/store
   EXCHANGER_DIR=$BATS_TEST_TMPDIR/$(sed -n 's/^exchangers=//p' "$root/src/components/exchanger/exchanger")
   mkdir -p "$STORE_DIR" "$EXCHANGER_DIR"
@@ -45,7 +44,7 @@ plugged_in() {
 }
 
 exchanging() {
-  jq -nc --arg wants "$1" '{who:"tore",wants:$wants}' | exchanger
+  jq -nc --arg wants "$1" '{who:"tore",wants:$wants}' | env -C "$BATS_TEST_TMPDIR" exchanger
 }
 
 @test "the plugin installed for the first segment is told the whole capability" {

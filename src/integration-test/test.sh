@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd "${ROOT_DIR:?test.sh: name the ROOT_DIR the packages were delivered under}"
-
 install=${INSTALL_COMMAND:?test.sh: name the INSTALL_COMMAND}
 remove=${REMOVE_PACKAGES:?test.sh: name the REMOVE_PACKAGES command}
 

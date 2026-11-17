@@ -1,4 +1,4 @@
-BASH_SOURCE_FILES := $(strip $(shell cd $(ROOT_DIR) && { git ls-files --cached --others --exclude-standard -- '*.sh' '*.bash' '*.bats'; git ls-files --cached --others --exclude-standard | tr '\n' '\0' | xargs -0 awk 'FNR == 1 && $$0 ~ /^\#!.*(sh|bats)$$/ { print FILENAME } { nextfile }'; } | awk '!/\/vendor\//' | sort -u | wc -l))
+BASH_SOURCE_FILES := $(strip $(shell { git -C $(ROOT_DIR) ls-files --cached --others --exclude-standard -- '*.sh' '*.bash' '*.bats' | awk -v root="$(ROOT_DIR)" '{ print root "/" $$0 }'; git -C $(ROOT_DIR) ls-files --cached --others --exclude-standard | awk -v root="$(ROOT_DIR)" '{ print root "/" $$0 }' | tr '\n' '\0' | xargs -0 awk 'FNR == 1 && $$0 ~ /^\#!.*(sh|bats)$$/ { print FILENAME } { nextfile }'; } | awk '!/\/vendor\//' | sort -u | wc -l))
 GO_SOURCE_FILES   := $(strip $(shell find $(ROOT_DIR)/src -name '*.go' ! -name '*_test.go' | grep -v /vendor/ | wc -l))
 JSON_SCHEMAS      := $(strip $(shell find $(ROOT_DIR)/src/contracts -name '*.schema.json' | wc -l))
 BATS_TEST_FILES   := $(strip $(shell find $(ROOT_DIR)/src $(ROOT_DIR)/scripts -name '*.bats' | wc -l))
