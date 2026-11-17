@@ -3,13 +3,11 @@ bats_require_minimum_version 1.5.0
 load "$ROOT_DIR/scripts/test/lib/helper"
 
 setup() {
-  root=$ROOT_DIR
-  PATH="$root/src/components/secret-manager:$root/build/bin:$PATH"
+  PATH="$ROOT_DIR/src/components/secret-manager:$ROOT_DIR/build/bin:$PATH"
   HOME=$BATS_TEST_TMPDIR/home
   mkdir "$HOME"
   store=$HOME/secrets
-  CONTRACTS_DIR="$root/src/contracts"
-  export PATH HOME CONTRACTS_DIR
+  export PATH HOME
 }
 
 putting() {

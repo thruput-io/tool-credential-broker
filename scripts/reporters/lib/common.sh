@@ -4,7 +4,7 @@ set -euo pipefail
 : "${ROOT_DIR:?reporters: name the ROOT_DIR}"
 
 tracked() {
-  git -C "$ROOT_DIR" ls-files --cached --others --exclude-standard -- "$@" | awk -v root="$ROOT_DIR" '!/\/vendor\// { print root "/" $0 }'
+  git -C "$ROOT_DIR" ls-files --cached --others --exclude-standard -- "$@" | awk '!/\/vendor\// { print ENVIRON["ROOT_DIR"] "/" $0 }'
 }
 
 first_line() {

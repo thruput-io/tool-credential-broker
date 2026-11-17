@@ -3,10 +3,8 @@ bats_require_minimum_version 1.5.0
 load "$ROOT_DIR/scripts/test/lib/helper"
 
 setup() {
-  root=$ROOT_DIR
-  PATH="$root/build/bin:$PATH"
-  CONTRACTS_DIR="$root/src/contracts"
-  export PATH CONTRACTS_DIR
+  PATH="$ROOT_DIR/build/bin:$PATH"
+  export PATH
 }
 
 reading() {
@@ -17,11 +15,12 @@ reading() {
 }
 
 probing() {
-  CONTRACTS_DIR=$BATS_TEST_TMPDIR/contracts
-  cp -R "$root/src/contracts" "$CONTRACTS_DIR"
-  cat > "$CONTRACTS_DIR/probe.schema.json" <<'SCHEMA'
+  mkdir -p "$BATS_TEST_TMPDIR/src/contracts"
+  cp -R "$ROOT_DIR/src/contracts/." "$BATS_TEST_TMPDIR/src/contracts"
+  cat > "$BATS_TEST_TMPDIR/src/contracts/probe.schema.json" <<'SCHEMA'
 {"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://thruput.io/gettoken/probe.schema.json","type":"object","additionalProperties":false,"properties":{"flag":{"type":"boolean"},"nothing":{"type":"null"}}}
 SCHEMA
+  ROOT_DIR=$BATS_TEST_TMPDIR
 }
 
 @test "a document satisfying its contract yields the fields it was asked for" {
@@ -98,7 +97,7 @@ SCHEMA
 @test "naming a contract that does not exist is refused, and says so differently" {
   run -1 --separate-stderr reading no-such-contract.schema.json '{}'
   [ "$output" = "" ]
-  assert_equal "$(without_kcov_trace "$stderr")" "parse: no contract named no-such-contract.schema.json in $root/src/contracts"
+  assert_equal "$(without_kcov_trace "$stderr")" "parse: no contract named no-such-contract.schema.json in $ROOT_DIR/src/contracts"
 }
 
 @test "a body that is not JSON at all is refused rather than read as empty" {

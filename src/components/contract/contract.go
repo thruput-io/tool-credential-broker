@@ -64,14 +64,19 @@ type admitted struct {
 	raw    []byte
 }
 
-// Directory is where the packages install the contracts, or where CONTRACTS_DIR
-// names instead. Entry points call it and pass what it answers to Open, so that
-// nothing below them reads the environment for itself.
+const datadir = "__DATADIR__/gettoken/contracts"
+
+// Directory is where the packages install the contracts, or where ROOT_DIR
+// holds them in an unconfigured source tree. Entry points call it and pass
+// what it answers to Open, so that nothing below them reads the environment
+// for itself.
 func Directory() string {
-	if named := os.Getenv("CONTRACTS_DIR"); named != "" {
-		return named
+	if strings.HasPrefix(datadir, "__") {
+		if root := os.Getenv("ROOT_DIR"); root != "" {
+			return filepath.Join(root, "src", "contracts")
+		}
 	}
-	return "__DATADIR__/gettoken/contracts"
+	return datadir
 }
 
 func read(directory, name string) (*jsonschema.Schema, error) {

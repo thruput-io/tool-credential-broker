@@ -3,18 +3,16 @@ bats_require_minimum_version 1.5.0
 load "$ROOT_DIR/scripts/test/lib/helper"
 
 setup() {
-  root=$ROOT_DIR
   STUB_DIR=$(mktemp -d)
-  PATH="$STUB_DIR:$root/src/components/token-service:$root/build/bin:$PATH"
-  CONTRACTS_DIR="$root/src/contracts"
+  PATH="$STUB_DIR:$ROOT_DIR/src/components/token-service:$ROOT_DIR/build/bin:$PATH"
   HANDED_FILE="$STUB_DIR/handed-to-the-exchanger"
-  export PATH CONTRACTS_DIR HANDED_FILE
+  export PATH
 }
 
 teardown() { rm -rf "$STUB_DIR"; }
 
 exchanger_that() {
-  printf '%s\n' '#!/bin/sh' 'set -eu' "cat > \"\$HANDED_FILE\"" "$1" > "$STUB_DIR/exchanger"
+  printf '%s\n' '#!/bin/sh' 'set -eu' "cat > \"$HANDED_FILE\"" "$1" > "$STUB_DIR/exchanger"
   chmod 755 "$STUB_DIR/exchanger"
 }
 

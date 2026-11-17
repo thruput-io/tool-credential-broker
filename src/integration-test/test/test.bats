@@ -3,16 +3,14 @@ bats_require_minimum_version 1.5.0
 load "$ROOT_DIR/scripts/test/lib/helper"
 
 setup() {
-  root=$ROOT_DIR
   home=$BATS_TEST_TMPDIR/home
   bin=$BATS_TEST_TMPDIR/installed/bin
   lib=$BATS_TEST_TMPDIR/installed/lib/gettoken
   RECORD_LOG=$BATS_TEST_TMPDIR/recorded
   mkdir -p "$home" "$bin" "$lib"
   touch "$RECORD_LOG"
-  export root home bin lib RECORD_LOG
-  installed_as "$bin/record" <<'EOF'
-printf '%s\n' "$*" >> "$RECORD_LOG"
+  installed_as "$bin/record" <<EOF
+printf '%s\n' "\$*" >> "$RECORD_LOG"
 EOF
   installed_as "$lib/secret-put" <<'EOF'
 doc=$(cat)
@@ -31,11 +29,11 @@ EOF
 }
 
 running() {
-  HOME=$home PATH="$bin:$PATH" ROOT_DIR=$root INSTALL_COMMAND="record install" REMOVE_PACKAGES="record remove" "$root/src/integration-test/test.sh"
+  HOME=$home PATH="$bin:$PATH" INSTALL_COMMAND="record install" REMOVE_PACKAGES="record remove" "$ROOT_DIR/src/integration-test/test.sh"
 }
 
 running_without() {
-  HOME=$home PATH="$bin:$PATH" ROOT_DIR=$root INSTALL_COMMAND="record install" REMOVE_PACKAGES="record remove" env -u "$1" "$root/src/integration-test/test.sh"
+  HOME=$home PATH="$bin:$PATH" INSTALL_COMMAND="record install" REMOVE_PACKAGES="record remove" env -u "$1" "$ROOT_DIR/src/integration-test/test.sh"
 }
 
 carried_in() {

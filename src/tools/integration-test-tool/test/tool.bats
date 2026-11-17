@@ -3,8 +3,7 @@ bats_require_minimum_version 1.5.0
 load "$ROOT_DIR/scripts/test/lib/helper"
 
 setup() {
-  root=$ROOT_DIR
-  PATH="$root/src/tools/integration-test-tool/bin:$PATH"
+  PATH="$ROOT_DIR/src/tools/integration-test-tool/bin:$PATH"
   export PATH
 }
 

@@ -1,12 +1,7 @@
 bats_require_minimum_version 1.5.0
 
-setup() {
-  root=$ROOT_DIR
-  export root
-}
-
 install_lists() {
-  find "$root/src" -type f -name '*.install' | sort
+  find "$ROOT_DIR/src" -type f -name '*.install' | sort
 }
 
 installed_into() {
@@ -32,5 +27,5 @@ destinations_reachable_without_gettoken_on_path() {
 
 @test "the exchanger is not something an agent can run" {
   [ "$(installed_into usr/bin)" = "$(installed_into usr/bin | grep -v integrationtest)" ]
-  grep -q 'usr/lib/gettoken/exchangers' "$root/src/tools/integration-test-tool/integration-test-tool-exchanger.install"
+  grep -q 'usr/lib/gettoken/exchangers' "$ROOT_DIR/src/tools/integration-test-tool/integration-test-tool-exchanger.install"
 }

@@ -3,18 +3,16 @@ bats_require_minimum_version 1.5.0
 load "$ROOT_DIR/scripts/test/lib/helper"
 
 setup() {
-  root=$ROOT_DIR
   stub=$(mktemp -d)
   ASK_FILE="$stub/ask.json"
-  PATH="$stub:$root/src/tools/gettoken/bin:$root/build/bin:$PATH"
-  CONTRACTS_DIR="$root/src/contracts"
-  export PATH CONTRACTS_DIR ASK_FILE
+  PATH="$stub:$ROOT_DIR/src/tools/gettoken/bin:$ROOT_DIR/build/bin:$PATH"
+  export PATH
 }
 
 teardown() { rm -rf "$stub"; }
 
 capturing() {
-  installed_as "$stub/$1" <<'STUB'
+  installed_as "$stub/$1" <<STUB
 cat > "$ASK_FILE"
 printf 'stub-token\n'
 STUB
