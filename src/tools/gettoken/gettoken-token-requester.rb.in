@@ -8,10 +8,12 @@ class GettokenTokenRequester < Formula
 @DEPENDS@
 
   def install
+    (lib/"gettoken").install "tools/gettoken/privileged/entitlements-requester"
     (lib/"gettoken").install "tools/gettoken/privileged/token-requester"
   end
 
   test do
+    assert_predicate lib/"gettoken/entitlements-requester", :exist?
     assert_predicate lib/"gettoken/token-requester", :exist?
   end
 end

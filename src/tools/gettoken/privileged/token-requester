@@ -1,22 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ "${1:-}" = "--list" ]; then
-  parse agent-list-request.schema.json > /dev/null
-
-  who=$(id -un)
-  doing=$(hostname)
-  signed=host-privileged
-  export who doing signed
-
-  request=$(format entitlements-request.schema.json who doing signed)
-
-  entitled=$(printf '%s' "$request" | entitlements)
-  printf '%s' "$entitled" | parse entitlements-response.schema.json
-  printf '%s\n' "$entitled"
-  exit 0
-fi
-
 fields=$(parse agent-capability-request.schema.json wants)
 wants=''
 eval "$fields"

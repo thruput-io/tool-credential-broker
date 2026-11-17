@@ -1,25 +1,21 @@
 bats_require_minimum_version 1.5.0
 
-load "$ROOT_DIR/scripts/test/helper"
+load "$ROOT_DIR/scripts/test/lib/helper"
 
 setup() {
-  root=$ROOT_DIR
   stub=$(mktemp -d)
   ASK_FILE="$stub/ask.json"
-  PATH="$stub:$root/src/tools/gettoken/bin:$root/build/bin:$PATH"
-  CONTRACTS_DIR="$root/src/contracts"
-  export PATH CONTRACTS_DIR ASK_FILE
+  PATH="$stub:$ROOT_DIR/src/tools/gettoken/bin:$ROOT_DIR/build/bin:$PATH"
+  export PATH
 }
 
 teardown() { rm -rf "$stub"; }
 
 capturing() {
-  cat > "$stub/token-requester" <<'STUB'
-#!/bin/sh
+  installed_as "$stub/$1" <<STUB
 cat > "$ASK_FILE"
 printf 'stub-token\n'
 STUB
-  chmod 755 "$stub/token-requester"
 }
 
 @test "no arguments refuses, hands over nothing, and names the tool the agent invoked" {
@@ -35,7 +31,7 @@ STUB
 }
 
 @test "the ask names the capability and nothing the agent has no say over" {
-  capturing
+  capturing token-requester
   run -0 --separate-stderr gettoken integrationtest/ci/run
   [ "$output" = "stub-token" ]
   assert_equal "$(without_kcov_trace "$stderr")" ""
@@ -43,7 +39,7 @@ STUB
 }
 
 @test "the ask for the list says it is the list being asked for" {
-  capturing
+  capturing entitlements-requester
   run -0 --separate-stderr gettoken --list
   [ "$output" = "stub-token" ]
   assert_equal "$(without_kcov_trace "$stderr")" ""

@@ -1,1 +1,2 @@
+tools/gettoken/privileged/entitlements-requester usr/lib/gettoken
 tools/gettoken/privileged/token-requester usr/lib/gettoken

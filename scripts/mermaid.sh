@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-root=$(CDPATH='' cd "$(dirname "$0")/.." && pwd)
+: "${ROOT_DIR:?mermaid.sh: name the ROOT_DIR}"
 mermaid_cli="@mermaid-js/mermaid-cli@11.17.0"
 work=$(mktemp -d)
 
@@ -10,7 +10,7 @@ block_count=$(awk -v outdir="$work" '
   inside && /^```$/ { close(file); inside=0; next }
   inside { print > file }
   END { if (inside) exit 1; print count+0 }
-' "$root/README.md")
+' "$ROOT_DIR/README.md")
 
 echo "# $block_count mermaid block(s) extracted from README.md"
 [ "$block_count" -gt 0 ] || { echo "FAIL: README.md contains no mermaid blocks"; exit 1; }
@@ -24,7 +24,7 @@ done
 
 echo
 echo "# the check must be able to fail"
-invalid="$root/scripts/fixtures/invalid-diagram.mmd"
+invalid="$ROOT_DIR/scripts/fixtures/invalid-diagram.mmd"
 [ -f "$invalid" ] || { echo "FAIL: $invalid is missing"; exit 1; }
 if npx -y "$mermaid_cli" -i "$invalid" -o "$work/invalid.svg" > "$work/invalid.log" 2>&1; then
   echo "FAIL: invalid-diagram.mmd rendered, so a broken diagram would pass unnoticed"

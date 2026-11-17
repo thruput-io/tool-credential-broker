@@ -1,13 +1,16 @@
 export ROOT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+export BUILD_NUMBER ?= 0
+
+$(if $(filter 4.% 5.%,$(MAKE_VERSION)),,$(error GNU make 4 or later is required, found $(MAKE_VERSION)))
 
 SHELL := /usr/bin/env bash
-SHELLOPTS := -euo pipefail
+.SHELLFLAGS := -euo pipefail -c
 
 -include $(ROOT_DIR)/build/config.mk
 
 export PATH := $(ROOT_DIR)/build/bin:$(PATH_PREFIX)$(PATH)
 
-.PHONY: all clean test diagrams stats config setup unit build contract lint lint-semgrep lint-shellcheck lint-go lint-make lint-schemas lint-permissions no-branching check-readme bash-unit-test bash-coverage go-unit-test go-coverage package integration-test readme $(ROOT_DIR)/build/shellcheck.checked $(ROOT_DIR)/build/make.checked $(ROOT_DIR)/build/schemas.checked $(ROOT_DIR)/build/go-lint.checked $(ROOT_DIR)/build/semgrep.checked $(ROOT_DIR)/build/lint.checked $(ROOT_DIR)/build/no-branching.checked $(ROOT_DIR)/build/bash-unit-test.checked $(ROOT_DIR)/build/bash-coverage.checked $(ROOT_DIR)/build/go-unit-test.checked $(ROOT_DIR)/build/go-coverage.checked $(ROOT_DIR)/build/unit.txt
+.PHONY: all clean test diagrams stats config setup unit build contract lint lint-semgrep lint-shellcheck lint-go lint-make lint-schemas lint-permissions no-branching check-readme bash-unit-test bash-coverage go-unit-test go-coverage package integration-test readme $(ROOT_DIR)/build/shellcheck.checked $(ROOT_DIR)/build/make.checked $(ROOT_DIR)/build/schemas.checked $(ROOT_DIR)/build/go-lint.checked $(ROOT_DIR)/build/semgrep.checked $(ROOT_DIR)/build/lint.checked $(ROOT_DIR)/build/no-branching.checked $(ROOT_DIR)/build/bash-unit-test.checked $(ROOT_DIR)/build/bash-coverage.checked $(ROOT_DIR)/build/go-unit-test.checked $(ROOT_DIR)/build/go-coverage.checked $(ROOT_DIR)/build/integration-test.checked $(ROOT_DIR)/build/unit.txt
 
 all:              test
 build:            package
@@ -61,57 +64,57 @@ $(ROOT_DIR)/build/tools.txt: $(ROOT_DIR)/build/config.mk
 
 $(ROOT_DIR)/build/semgrep.txt: $(ROOT_DIR)/build/tools.txt
 	$(SEMGREP_INSTALL_COMMAND)
-	$(ROOT_DIR)/scripts/fetch-semgrep-bash.sh $(ROOT_DIR)/build > $@
+	semgrep --version > $@
 
-$(ROOT_DIR)/build/versions.txt: $(ROOT_DIR)/build/tools.txt $(ROOT_DIR)/build/semgrep.txt
+$(ROOT_DIR)/build/versions.txt: $(ROOT_DIR)/build/config.mk
+	@mkdir -p $(@D)
 	$(ROOT_DIR)/scripts/versions.sh > $@
 
 $(ROOT_DIR)/build/setup.txt: $(ROOT_DIR)/build/tools.txt $(ROOT_DIR)/build/semgrep.txt $(ROOT_DIR)/build/versions.txt
-	source $(ROOT_DIR)/dynamic.sh && ensure_bash5
 	cat $^ > $@
 
-$(ROOT_DIR)/build/bin/parse $(ROOT_DIR)/build/bin/format: $(ROOT_DIR)/build/go-sources $(ROOT_DIR)/build/setup.txt
+$(ROOT_DIR)/build/bin/parse $(ROOT_DIR)/build/bin/format: $(ROOT_DIR)/build/go-sources $(ROOT_DIR)/build/versions.txt
 	$(ROOT_DIR)/src/components/contract/build.sh $(ROOT_DIR)/build/bin
 
 include $(ROOT_DIR)/stats.mk
 
-$(ROOT_DIR)/build/semgrep-report.json: $(ROOT_DIR)/build/sources $(ROOT_DIR)/build/setup.txt
+$(ROOT_DIR)/build/semgrep-report.json: $(ROOT_DIR)/build/sources $(ROOT_DIR)/build/versions.txt
 	@mkdir -p $(@D)
 	$(ROOT_DIR)/scripts/reporters/semgrep.sh $@
 
-$(ROOT_DIR)/build/shellcheck-report.json: $(ROOT_DIR)/build/sources $(ROOT_DIR)/build/setup.txt
+$(ROOT_DIR)/build/shellcheck-report.json: $(ROOT_DIR)/build/sources $(ROOT_DIR)/build/versions.txt
 	@mkdir -p $(@D)
 	$(ROOT_DIR)/scripts/reporters/shellcheck.sh $@
 
-$(ROOT_DIR)/build/go-report.json: $(ROOT_DIR)/build/go-sources $(ROOT_DIR)/build/setup.txt
+$(ROOT_DIR)/build/go-report.json: $(ROOT_DIR)/build/go-sources $(ROOT_DIR)/build/versions.txt
 	@mkdir -p $(@D)
 	go -C $(ROOT_DIR)/src/components/contract vet -json -mod=vendor ./... > $@
 
-$(ROOT_DIR)/build/make-report.json: $(ROOT_DIR)/Makefile $(ROOT_DIR)/build/setup.txt
+$(ROOT_DIR)/build/make-report.json: $(ROOT_DIR)/Makefile $(ROOT_DIR)/build/versions.txt
 	@mkdir -p $(@D)
 	checkmake -o json $(ROOT_DIR)/Makefile > $@
 
-$(ROOT_DIR)/build/schema-report.json: $(ROOT_DIR)/build/schema-sources $(ROOT_DIR)/build/setup.txt
+$(ROOT_DIR)/build/schema-report.json: $(ROOT_DIR)/build/schema-sources $(ROOT_DIR)/build/versions.txt
 	@mkdir -p $(@D)
 	check-jsonschema --check-metaschema --output-format=json $(ROOT_DIR)/src/contracts/*.schema.json > $@
 
-$(ROOT_DIR)/build/check-permissions.txt: $(ROOT_DIR)/build/sources $(ROOT_DIR)/build/setup.txt
+$(ROOT_DIR)/build/check-permissions.txt: $(ROOT_DIR)/build/sources $(ROOT_DIR)/build/versions.txt
 	@mkdir -p $(@D)
 	umask 002 && $(ROOT_DIR)/scripts/check-permissions.sh $(ROOT_DIR)/src $(ROOT_DIR)/scripts > $@
 
-$(ROOT_DIR)/build/check-readme.txt: $(ROOT_DIR)/build/sources $(ROOT_DIR)/README.md $(ROOT_DIR)/build/setup.txt
+$(ROOT_DIR)/build/check-readme.txt: $(ROOT_DIR)/build/sources $(ROOT_DIR)/README.md $(ROOT_DIR)/build/versions.txt
 	@mkdir -p $(@D)
 	$(ROOT_DIR)/scripts/readme.sh $(ROOT_DIR) --check > $@
 
-$(ROOT_DIR)/build/report.tap: $(ROOT_DIR)/build/sources $(ROOT_DIR)/build/bin/parse $(ROOT_DIR)/build/bin/format $(ROOT_DIR)/build/setup.txt
+$(ROOT_DIR)/build/report.tap: $(ROOT_DIR)/build/sources $(ROOT_DIR)/build/bin/parse $(ROOT_DIR)/build/bin/format $(ROOT_DIR)/build/versions.txt
 	@mkdir -p $(@D)
 	bats --recursive --timing --print-output-on-failure --formatter tap13 --report-formatter tap13 --output $(ROOT_DIR)/build $(ROOT_DIR)/src $(ROOT_DIR)/scripts
 
-$(ROOT_DIR)/build/kcov/bats/coverage.json: $(ROOT_DIR)/build/sources $(ROOT_DIR)/build/bin/parse $(ROOT_DIR)/build/bin/format $(ROOT_DIR)/build/setup.txt
+$(ROOT_DIR)/build/kcov/bats/coverage.json: $(ROOT_DIR)/build/sources $(ROOT_DIR)/build/bin/parse $(ROOT_DIR)/build/bin/format $(ROOT_DIR)/build/versions.txt
 	@mkdir -p $(ROOT_DIR)/build/kcov
-	kcov --clean --bash-parser=$$(command -v bash) --bash-parse-files-in-dir=$(ROOT_DIR)/src --include-path=$(ROOT_DIR)/src --exclude-pattern=.bats,/bats-core/,/Cellar/bats-core/ $(ROOT_DIR)/build/kcov bats --recursive $(ROOT_DIR)/src $(ROOT_DIR)/scripts
+	ulimit -S -n 4096 && kcov --clean --bash-parser=$$(command -v bash) --bash-parse-files-in-dir=$(ROOT_DIR)/src --include-path=$(ROOT_DIR)/src --exclude-pattern=.bats,/bats-core/,/Cellar/bats-core/ $(ROOT_DIR)/build/kcov bats --recursive $(ROOT_DIR)/src $(ROOT_DIR)/scripts
 
-$(ROOT_DIR)/build/go-unit-test.json: $(ROOT_DIR)/build/go-sources $(ROOT_DIR)/build/setup.txt
+$(ROOT_DIR)/build/go-unit-test.json: $(ROOT_DIR)/build/go-sources $(ROOT_DIR)/build/versions.txt
 	@mkdir -p $(@D)
 	go test -C $(ROOT_DIR)/src/components/contract -json -mod=vendor -coverprofile=$(ROOT_DIR)/build/go.coverprofile ./... > $@
 
@@ -143,7 +146,7 @@ $(ROOT_DIR)/build/semgrep.checked: $(ROOT_DIR)/build/semgrep-report.json $(ROOT_
 $(ROOT_DIR)/build/lint.checked: $(ROOT_DIR)/build/shellcheck.checked $(ROOT_DIR)/build/make.checked $(ROOT_DIR)/build/schemas.checked $(ROOT_DIR)/build/go-lint.checked $(ROOT_DIR)/build/semgrep.checked
 	@echo "All lint accept checks passed cleanly"
 
-$(ROOT_DIR)/build/branching-report.txt: $(ROOT_DIR)/build/sources $(ROOT_DIR)/build/setup.txt
+$(ROOT_DIR)/build/branching-report.txt: $(ROOT_DIR)/build/sources $(ROOT_DIR)/build/versions.txt
 	@mkdir -p $(@D)
 	$(ROOT_DIR)/scripts/branching.sh $(ROOT_DIR) > $@
 
@@ -152,7 +155,7 @@ $(ROOT_DIR)/build/no-branching.checked: $(ROOT_DIR)/build/branching-report.txt $
 	[ "$$sites" -le 0 ] && [ "$(BATS_TEST_FILES)" -gt 0 ]
 
 $(ROOT_DIR)/build/bash-unit-test.checked: $(ROOT_DIR)/build/report.tap $(ROOT_DIR)/build/stats.txt
-	pass=$$(grep -c -- '^ok ' $<); fail=$$(grep -c -- '^not ok ' $<); \
+	pass=$$(sed -n '/^ok /p' $< | wc -l | tr -d ' '); fail=$$(sed -n '/^not ok /p' $< | wc -l | tr -d ' '); \
 	echo "bats: $$pass passed, $$fail failed (min 10, stat $(BATS_TESTS))"; \
 	[ "$$fail" -eq 0 ] && [ "$$pass" -ge 10 ] && [ "$$(( $$pass + $$fail ))" -eq "$(BATS_TESTS)" ]
 
@@ -167,7 +170,7 @@ $(ROOT_DIR)/build/go-coverage.checked: $(ROOT_DIR)/build/go-coverage.txt $(ROOT_
 	[ "$${percent%.*}" -ge 44 ] && [ "$$files" -gt 0 ]
 
 $(ROOT_DIR)/build/go-unit-test.checked: $(ROOT_DIR)/build/go-unit-test.json $(ROOT_DIR)/build/stats.txt
-	pass=$$(grep -c -- '--- PASS:' $<); fail=$$(grep -c -- '--- FAIL:' $<); ran=$$(grep -c -- '=== RUN' $<); \
+	pass=$$(sed -n '/--- PASS:/p' $< | wc -l | tr -d ' '); fail=$$(sed -n '/--- FAIL:/p' $< | wc -l | tr -d ' '); ran=$$(sed -n '/=== RUN/p' $< | wc -l | tr -d ' '); \
 	echo "go test: $$pass passed, $$fail failed, $$ran run (min 10, stat $(GO_TESTS))"; \
 	[ "$$fail" -eq 0 ] && [ "$$pass" -ge 10 ] && [ "$$ran" -eq "$$(($$pass + $$fail))" ] && [ "$$ran" -eq "$(GO_TESTS)" ]
 
@@ -179,10 +182,15 @@ $(ROOT_DIR)/build/package.txt: $(ROOT_DIR)/build/unit.txt $(ROOT_DIR)/build/lint
 	$(ROOT_DIR)/scripts/package.sh $(ROOT_DIR)/build/dist > $@
 	cat $@
 
-$(ROOT_DIR)/build/integration-test.checked: $(ROOT_DIR)/build/config.mk $(ROOT_DIR)/build/package.txt
+$(ROOT_DIR)/build/integration-test-report.txt: $(ROOT_DIR)/build/config.mk $(ROOT_DIR)/build/package.txt
 	@mkdir -p $(@D)
 	eval "$$ADD_ARCHIVE"
 	$(ROOT_DIR)/src/integration-test/test.sh > $@
+
+$(ROOT_DIR)/build/integration-test.checked: $(ROOT_DIR)/build/integration-test-report.txt
+	carried=$$(sed -n 's/^carried=//p' $<); ran_on=$$(sed -n 's/^ran_on=//p' $<); runs=$$(sed -n '/^ran_on=/p' $< | wc -l | tr -d ' '); \
+	echo "integration-test: integrationtest/ci/run ran on $$ran_on, carried $$carried ($$runs runs, min 1)"; \
+	[ "$$ran_on" = "$$carried" ] && [ "$$runs" -ge 1 ]
 
 $(ROOT_DIR)/build/diagrams.txt: $(ROOT_DIR)/build/sources $(ROOT_DIR)/README.md $(ROOT_DIR)/scripts/mermaid.sh
 	@mkdir -p $(@D)

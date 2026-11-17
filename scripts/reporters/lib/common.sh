@@ -1,10 +1,10 @@
-#!/usr/bin/env bash
+# shellcheck shell=bash
 set -euo pipefail
 
-cd "${ROOT_DIR:?reporters: name the ROOT_DIR}" || exit 1
+: "${ROOT_DIR:?reporters: name the ROOT_DIR}"
 
 tracked() {
-  git ls-files --cached --others --exclude-standard -- "$@" | awk '!/\/vendor\//'
+  git -C "$ROOT_DIR" ls-files --cached --others --exclude-standard -- "$@" | awk '!/\/vendor\// { print ENVIRON["ROOT_DIR"] "/" $0 }'
 }
 
 first_line() {

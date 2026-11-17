@@ -34,7 +34,10 @@ is the only place allowed to span them.
 
 `make unit` runs the suite where you invoke it. `make package` builds every
 format named in `PACKAGE_FORMATS`, and `make test` installs what was built and
-uses it, so only that one reaches the paths a package puts things at. What each
+uses it, so only that one reaches the paths a package puts things at. What that
+run put in the store and what the tool ran on land in
+`build/integration-test-report.txt`, and the check reads them back from there:
+a run that stopped short leaves a short report, which fails. What each
 of them needs is declared per platform in `constants.env`, and `make setup`
 installs it: a Go toolchain, which builds the contract component, `bats` with
 `bats-support` and `bats-assert`, `shellcheck`, `semgrep`, `kcov`, `checkmake`,
@@ -42,7 +45,10 @@ and `check-jsonschema`, and on Debian the toolchain that builds the `.deb`.
 
 `make unit` builds `parse` and `format` before it runs anything, into a
 directory it puts on `PATH`. Every check runs through a make target; there is no
-other way a check is run.
+other way a check is run. Every recipe line runs under `bash -euo pipefail`,
+set through `.SHELLFLAGS`, which GNU make has had since 3.82; the Makefile
+refuses an older make. Apple ships 3.81, so on macOS `brew install make` and
+run `gmake`.
 
 The gate reads every file's first line: a script says which shell it is written
 for with a shebang, and a file that is sourced rather than run says it with a
@@ -86,8 +92,8 @@ which holds what belongs to no tool. It does so before `dpkg` reads anything,
 because `dpkg` resolves build dependencies out of `debian/control` before any
 rule could act.
 
-A component never spells out where it is installed. It names `@libdir@` or
-`@datadir@`, and the Makefile beside the source fills them in from `prefix`,
+A component never spells out where it is installed. It names `__LIBDIR__` or
+`__DATADIR__`, and the Makefile beside the source fills them in from `prefix`,
 with the defaults the GNU coding standards give them. The Debian rules build
 for `/usr`; a formula builds for the Homebrew prefix. Run from a checkout
 nothing is filled in, and the tests name the directories they need through the

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-token=${INTEGRATIONTEST_TOKEN:-}
+token=${INTEGRATIONTEST_TOKEN:?integration-test-tool: INTEGRATIONTEST_TOKEN does not allow integrationtest/ci/run}
 
 case "$token" in
   ?*-ci-run-allowed) ;;

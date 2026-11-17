@@ -1,10 +1,9 @@
 bats_require_minimum_version 1.5.0
 
-load "$ROOT_DIR/scripts/test/helper"
+load "$ROOT_DIR/scripts/test/lib/helper"
 
 setup() {
-  root=$ROOT_DIR
-  PATH="$root/src/tools/integration-test-tool/bin:$PATH"
+  PATH="$ROOT_DIR/src/tools/integration-test-tool/bin:$PATH"
   export PATH
 }
 
@@ -27,7 +26,7 @@ running() {
 @test "no token at all is refused, and hands over nothing" {
   run -1 --separate-stderr sh -c 'unset INTEGRATIONTEST_TOKEN; integration-test-tool'
   [ "$output" = "" ]
-  assert_equal "$(without_kcov_trace "$stderr")" "integration-test-tool: INTEGRATIONTEST_TOKEN does not allow integrationtest/ci/run"
+  [[ "$(without_kcov_trace "$stderr")" == *": INTEGRATIONTEST_TOKEN: integration-test-tool: INTEGRATIONTEST_TOKEN does not allow integrationtest/ci/run" ]]
 }
 
 @test "a token allowing something else is refused" {

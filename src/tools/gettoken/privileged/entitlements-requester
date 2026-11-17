@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+parse agent-list-request.schema.json > /dev/null
+
+who=$(id -un)
+doing=$(hostname)
+signed=host-privileged
+export who doing signed
+
+request=$(format entitlements-request.schema.json who doing signed)
+
+entitled=$(printf '%s' "$request" | entitlements)
+printf '%s' "$entitled" | parse entitlements-response.schema.json
+printf '%s\n' "$entitled"

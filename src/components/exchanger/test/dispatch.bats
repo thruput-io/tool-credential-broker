@@ -1,32 +1,31 @@
 bats_require_minimum_version 1.5.0
 
-load "$ROOT_DIR/scripts/test/helper"
+load "$ROOT_DIR/scripts/test/lib/helper"
 
 setup() {
-  root=$ROOT_DIR
-  STORE_DIR=$(mktemp -d)
-  PATH="$STORE_DIR:$root/src/components/exchanger:$root/build/bin:$PATH"
-  EXCHANGER_DIR=$(mktemp -d)
-  CONTRACTS_DIR="$root/src/contracts"
+  STORE_DIR=$BATS_TEST_TMPDIR/store
+  EXCHANGER_DIR=$BATS_TEST_TMPDIR/$(sed -n 's/^exchangers=//p' "$ROOT_DIR/src/components/exchanger/exchanger")
+  mkdir -p "$STORE_DIR" "$EXCHANGER_DIR"
+  PATH="$STORE_DIR:$ROOT_DIR/src/components/exchanger:$ROOT_DIR/build/bin:$PATH"
   ASKED_FILE="$STORE_DIR/asked"
   ARGS_FILE="$STORE_DIR/args"
   RAN_FILE="$STORE_DIR/the-plugin-ran"
-  export PATH EXCHANGER_DIR CONTRACTS_DIR ASKED_FILE ARGS_FILE RAN_FILE
+  export PATH
   holding super-sample-token-123
 }
 
-teardown() { rm -rf "$EXCHANGER_DIR" "$STORE_DIR"; }
+teardown() { :; }
 
 holding() {
   STORED=$1
   export STORED
-  cat > "$STORE_DIR/secret-get" <<'STUB'
+  cat > "$STORE_DIR/secret-get" <<STUB
 #!/bin/sh
 set -eu
-printf '%s' "$*" > "$ARGS_FILE"
+printf '%s' "\$*" > "$ARGS_FILE"
 cat > "$ASKED_FILE"
 version=0
-value=$STORED
+value=\$STORED
 export version value
 format secret-get-response.schema.json version value
 STUB
@@ -39,12 +38,11 @@ holding_nothing() {
 }
 
 plugged_in() {
-  printf '%s\n' '#!/bin/sh' 'set -eu' "$2" > "$EXCHANGER_DIR/$1"
-  chmod 755 "$EXCHANGER_DIR/$1"
+  printf '%s\n' 'exchange() {' "  $2" '}' > "$EXCHANGER_DIR/$1.sh"
 }
 
 exchanging() {
-  jq -nc --arg wants "$1" '{who:"tore",wants:$wants}' | exchanger
+  jq -nc --arg wants "$1" '{who:"tore",wants:$wants}' | env -C "$BATS_TEST_TMPDIR" exchanger
 }
 
 @test "the plugin installed for the first segment is told the whole capability" {
@@ -65,7 +63,7 @@ exchanging() {
 @test "the plugin is handed the stored secret byte for byte" {
   printf -v secret '%s\n' super-9b1e
   holding "$secret"
-  plugged_in integrationtest "cat > \"\$RAN_FILE\"; echo narrow-token"
+  plugged_in integrationtest "cat > \"$RAN_FILE\"; echo narrow-token"
   run -0 --separate-stderr exchanging integrationtest/ci/run
   [ "$output" = '{"access_token":"narrow-token","expires_in":120}' ]
   assert_equal "$(without_kcov_trace "$stderr")" ""
@@ -85,13 +83,13 @@ exchanging() {
   run -0 --separate-stderr exchanging integrationtest/ci/run
   [ "$(printf '%s' "$output" | jq -r '.access_token')" = "narrow-token" ]
   [ "$(jq -r '.key' < "$ASKED_FILE")" = "host-privileged/integrationtest" ]
-  [ "$(cat "$ARGS_FILE")" = "--with-key" ]
+  [ "$(cat "$ARGS_FILE")" = "" ]
   assert_equal "$(without_kcov_trace "$stderr")" ""
 }
 
 @test "a service the store holds nothing for hands over nothing, and its plugin never runs" {
   holding_nothing
-  plugged_in integrationtest "touch \"\$RAN_FILE\"; echo narrow-token"
+  plugged_in integrationtest "touch \"$RAN_FILE\"; echo narrow-token"
   run -1 --separate-stderr exchanging integrationtest/ci/run
   [ "$output" = "" ]
   assert_equal "$(without_kcov_trace "$stderr")" "secret-get: nothing is stored under the key"

@@ -1,14 +1,12 @@
 bats_require_minimum_version 1.5.0
 
-load "$ROOT_DIR/scripts/test/helper"
+load "$ROOT_DIR/scripts/test/lib/helper"
 
 setup() {
-  root=$ROOT_DIR
   stub=$(mktemp -d)
   REQUEST_FILE="$stub/request.json"
-  PATH="$stub:$root/src/tools/gettoken/privileged:$root/build/bin:$PATH"
-  CONTRACTS_DIR="$root/src/contracts"
-  export PATH CONTRACTS_DIR REQUEST_FILE
+  PATH="$stub:$ROOT_DIR/src/tools/gettoken/privileged:$ROOT_DIR/build/bin:$PATH"
+  export PATH
 }
 
 teardown() { rm -rf "$stub"; }
@@ -16,7 +14,7 @@ teardown() { rm -rf "$stub"; }
 answering() {
   cat > "$stub/token-service" <<STUB
 #!/bin/sh
-cat > "\$REQUEST_FILE"
+cat > "$REQUEST_FILE"
 printf '%s\n' '$1'
 STUB
   chmod 755 "$stub/token-service"
@@ -65,14 +63,18 @@ asking() {
   assert_equal "$(without_kcov_trace "$stderr")" "$expected"
 }
 
+asking_for_the_list() {
+  printf '%s' '{"query":"list"}' | entitlements-requester
+}
+
 @test "the list is asked for by who is asking and from where, and handed back whole" {
-  cat > "$stub/entitlements" <<'STUB'
+  cat > "$stub/entitlements" <<STUB
 #!/bin/sh
 cat > "$REQUEST_FILE"
 printf '%s\n' '{"entitlements":[]}'
 STUB
   chmod 755 "$stub/entitlements"
-  run -0 --separate-stderr sh -c 'printf %s "{\"query\":\"list\"}" | token-requester --list'
+  run -0 --separate-stderr asking_for_the_list
   [ "$output" = '{"entitlements":[]}' ]
   assert_equal "$(without_kcov_trace "$stderr")" ""
   [ "$(cat "$REQUEST_FILE")" = "{\"doing\":\"$(hostname)\",\"signed\":\"host-privileged\",\"who\":\"$(id -un)\"}" ]

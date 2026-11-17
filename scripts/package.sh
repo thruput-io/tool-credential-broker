@@ -3,15 +3,15 @@ set -euo pipefail
 
 into=${1:?package.sh: name the directory to deliver the packages into}
 
-root=$(CDPATH='' cd "$(dirname "$0")/.." && pwd)
+: "${ROOT_DIR:?package.sh: name the ROOT_DIR}"
 
 for fmt in ${PACKAGE_FORMATS:?package.sh: name the PACKAGE_FORMATS to build}; do
   case "$fmt" in
     deb)
-      bash "$root/scripts/deliver-deb.sh" "$into/deb"
+      bash "$ROOT_DIR/scripts/deliver-deb.sh" "$into/deb"
       ;;
     brew)
-      bash "$root/scripts/deliver-brew.sh" "$into/brew"
+      bash "$ROOT_DIR/scripts/deliver-brew.sh" "$into/brew"
       ;;
     *)
       echo "package.sh: no packaging for format '$fmt'" >&2

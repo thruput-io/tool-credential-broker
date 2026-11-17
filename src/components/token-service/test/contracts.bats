@@ -1,12 +1,10 @@
 bats_require_minimum_version 1.5.0
 
-load "$ROOT_DIR/scripts/test/helper"
+load "$ROOT_DIR/scripts/test/lib/helper"
 
 setup() {
-  root=$ROOT_DIR
-  PATH="$root/build/bin:$PATH"
-  CONTRACTS_DIR="$root/src/contracts"
-  export PATH CONTRACTS_DIR
+  PATH="$ROOT_DIR/build/bin:$PATH"
+  export PATH
 }
 
 admits() { printf '%s' "$2" | parse "$1" "${@:3}"; }

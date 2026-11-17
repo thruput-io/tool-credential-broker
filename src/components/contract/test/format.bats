@@ -1,12 +1,10 @@
 bats_require_minimum_version 1.5.0
 
-load "$ROOT_DIR/scripts/test/helper"
+load "$ROOT_DIR/scripts/test/lib/helper"
 
 setup() {
-  root=$ROOT_DIR
-  PATH="$root/build/bin:$PATH"
-  CONTRACTS_DIR="$root/src/contracts"
-  export PATH CONTRACTS_DIR
+  PATH="$ROOT_DIR/build/bin:$PATH"
+  export PATH
 }
 
 @test "a value that is not JSON is the one that gets quoted" {
@@ -97,7 +95,7 @@ LITERAL
   export who
   run -1 --separate-stderr format no-such-contract.schema.json who
   [ "$output" = "" ]
-  assert_equal "$(without_kcov_trace "$stderr")" "format: no contract named no-such-contract.schema.json in $root/src/contracts"
+  assert_equal "$(without_kcov_trace "$stderr")" "format: no contract named no-such-contract.schema.json in $ROOT_DIR/src/contracts"
 }
 
 @test "a secret made of digits only is stored as the text it is" {
