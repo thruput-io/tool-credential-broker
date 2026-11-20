@@ -12,10 +12,6 @@ setup() {
   installed_as "$bin/record" <<EOF
 printf '%s\n' "\$*" >> "$RECORD_LOG"
 EOF
-  installed_as "$bin/as-agent" <<EOF
-printf 'as-agent %s\n' "\$*" >> "$RECORD_LOG"
-exec "\$@"
-EOF
   installed_as "$lib/secret-put" <<'EOF'
 doc=$(cat)
 dir=$HOME/secrets/$(printf '%s' "$doc" | jq -r .key)
@@ -33,11 +29,11 @@ EOF
 }
 
 running() {
-  HOME=$home PATH="$bin:$PATH" INSTALL_COMMAND="record install" REMOVE_PACKAGES="record remove" AS_AGENT="as-agent" "$ROOT_DIR/src/integration-test/test.sh"
+  HOME=$home PATH="$bin:$PATH" INSTALL_COMMAND="record install" REMOVE_PACKAGES="record remove" "$ROOT_DIR/src/integration-test/test.sh"
 }
 
 running_without() {
-  HOME=$home PATH="$bin:$PATH" INSTALL_COMMAND="record install" REMOVE_PACKAGES="record remove" AS_AGENT="as-agent" env -u "$1" "$ROOT_DIR/src/integration-test/test.sh"
+  HOME=$home PATH="$bin:$PATH" INSTALL_COMMAND="record install" REMOVE_PACKAGES="record remove" env -u "$1" "$ROOT_DIR/src/integration-test/test.sh"
 }
 
 carried_in() {
@@ -54,7 +50,7 @@ report_of() {
   [[ "$output" =~ $expected ]]
   [ "${BASH_REMATCH[1]}" = "${BASH_REMATCH[2]}" ]
   assert_equal "$(without_kcov_trace "$stderr")" ""
-  [ "$(cat "$RECORD_LOG")" = "$(printf 'install integration-test-tool\nas-agent gettoken integrationtest/ci/run\nas-agent integration-test-tool\nremove')" ]
+  [ "$(cat "$RECORD_LOG")" = "$(printf 'install integration-test-tool\nremove')" ]
   [ ! -e "$home/secrets/host-privileged/integrationtest" ]
 }
 
@@ -66,7 +62,7 @@ EOF
   expected=$(report_of 'carried=[0-9a-f]{32}\nran_on=not-what-was-put')
   [[ "$output" =~ $expected ]]
   assert_equal "$(without_kcov_trace "$stderr")" "integration-test: integrationtest/ci/run ran on 'not-what-was-put', not on the '$(carried_in "$output")' that was put in the store"
-  [ "$(cat "$RECORD_LOG")" = "$(printf 'install integration-test-tool\nas-agent gettoken integrationtest/ci/run\nas-agent integration-test-tool\nremove')" ]
+  [ "$(cat "$RECORD_LOG")" = "$(printf 'install integration-test-tool\nremove')" ]
   [ ! -e "$home/secrets/host-privileged/integrationtest" ]
 }
 
@@ -78,7 +74,7 @@ EOF
   expected=$(report_of 'carried=[0-9a-f]{32}')
   [[ "$output" =~ $expected ]]
   assert_equal "$(without_kcov_trace "$stderr")" "integration-test-tool: boom"
-  [ "$(cat "$RECORD_LOG")" = "$(printf 'install integration-test-tool\nas-agent gettoken integrationtest/ci/run\nas-agent integration-test-tool\nremove')" ]
+  [ "$(cat "$RECORD_LOG")" = "$(printf 'install integration-test-tool\nremove')" ]
   [ ! -e "$home/secrets/host-privileged/integrationtest" ]
 }
 
@@ -93,12 +89,5 @@ EOF
   run -1 --separate-stderr running_without REMOVE_PACKAGES
   [ "$output" = "" ]
   [[ "$(without_kcov_trace "$stderr")" == *": REMOVE_PACKAGES: test.sh: name the REMOVE_PACKAGES command" ]]
-  [ "$(cat "$RECORD_LOG")" = "" ]
-}
-
-@test "naming no AS_AGENT is refused before anything is installed" {
-  run -1 --separate-stderr running_without AS_AGENT
-  [ "$output" = "" ]
-  [[ "$(without_kcov_trace "$stderr")" == *": AS_AGENT: test.sh: name the AS_AGENT command" ]]
   [ "$(cat "$RECORD_LOG")" = "" ]
 }

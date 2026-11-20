@@ -1,0 +1,75 @@
+name: integration-as-agent
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  BUILD_NUMBER: ${{ github.run_number }}
+  ROOT_DIR: ${{ github.workspace }}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    container: debian:testing-slim
+    steps:
+      - run: apt-get update && apt-get install -y --no-install-recommends make git ca-certificates
+      - uses: actions/checkout@v4
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - run: make setup
+      - run: make build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-debian-as-agent
+          path: build/dist
+          retention-days: 7
+
+  build-macos:
+    name: build macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install make
+      - run: gmake setup
+      - run: gmake build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-macos-as-agent
+          path: build/dist
+          retention-days: 7
+
+  integration:
+    name: ${{ matrix.name }}
+    needs: [build, build-macos]
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: Debian as-agent, os: ubuntu-latest, container: 'debian:testing-slim', dist: dist-debian-as-agent, platform: DEBIAN }
+          - { name: macOS as-agent,  os: macos-latest,  container: '',                    dist: dist-macos-as-agent,  platform: DARWIN }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.dist }}
+          path: build/dist
+      - run: |
+          source constants.env
+          BREW_TAP="$BREW_TAP" bash -ec "$${{ matrix.platform }}_ADD_ARCHIVE"
+      - run: |
+          source constants.env
+          install_command="${{ matrix.platform }}_INSTALL_COMMAND"
+          remove_packages="${{ matrix.platform }}_REMOVE_PACKAGES"
+          as_agent="${{ matrix.platform }}_AS_AGENT"
+          BREW_TAP="$BREW_TAP" INSTALL_COMMAND="${!install_command}" REMOVE_PACKAGES="${!remove_packages}" AS_AGENT="${!as_agent}" bash src/integration-test/test-as-agent.sh

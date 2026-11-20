@@ -79,6 +79,5 @@ jobs:
           source constants.env
           install_command="${{ matrix.platform }}_INSTALL_COMMAND"
           remove_packages="${{ matrix.platform }}_REMOVE_PACKAGES"
-          as_agent="${{ matrix.platform }}_AS_AGENT"
-          BREW_TAP="$BREW_TAP" INSTALL_COMMAND="${!install_command}" REMOVE_PACKAGES="${!remove_packages}" AS_AGENT="${!as_agent}" bash src/integration-test/test.sh
+          BREW_TAP="$BREW_TAP" INSTALL_COMMAND="${!install_command}" REMOVE_PACKAGES="${!remove_packages}" bash src/integration-test/test.sh
 

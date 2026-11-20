@@ -3,7 +3,6 @@ set -euo pipefail
 
 install=${INSTALL_COMMAND:?test.sh: name the INSTALL_COMMAND}
 remove=${REMOVE_PACKAGES:?test.sh: name the REMOVE_PACKAGES command}
-as_agent=${AS_AGENT:?test.sh: name the AS_AGENT command}
 
 leaving_nothing_behind() {
   rm -rf "$HOME/secrets/host-privileged/integrationtest"
@@ -23,9 +22,9 @@ PATH=$privileged_side_beside_gettoken:$PATH secret-put > /dev/null <<SUPERTOKEN
 SUPERTOKEN
 echo "carried=$carried"
 
-INTEGRATIONTEST_TOKEN=$(bash -ec "$as_agent gettoken integrationtest/ci/run")
+INTEGRATIONTEST_TOKEN=$(gettoken integrationtest/ci/run)
 export INTEGRATIONTEST_TOKEN
-ran_on=$(bash -ec "$as_agent integration-test-tool")
+ran_on=$(integration-test-tool)
 echo "ran_on=$ran_on"
 
 test "$ran_on" = "$carried" || {
