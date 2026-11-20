@@ -77,9 +77,7 @@ jobs:
           BREW_TAP="$BREW_TAP" bash -ec "$${{ matrix.platform }}_ADD_ARCHIVE"
       - run: |
           source constants.env
-          BREW_TAP="$BREW_TAP" INSTALL_COMMAND="$${{ matrix.platform }}_INSTALL_COMMAND" REMOVE_PACKAGES="$${{ matrix.platform }}_REMOVE_PACKAGES" bash src/integration-test/test.sh > build/integration-test-report.txt
-      - if: always()
-        uses: ./.github/actions/upload-reports
-        with:
-          name: reports-integration-${{ matrix.platform }}
+          install_command="${{ matrix.platform }}_INSTALL_COMMAND"
+          remove_packages="${{ matrix.platform }}_REMOVE_PACKAGES"
+          BREW_TAP="$BREW_TAP" INSTALL_COMMAND="${!install_command}" REMOVE_PACKAGES="${!remove_packages}" bash src/integration-test/test.sh
 

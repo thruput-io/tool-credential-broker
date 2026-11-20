@@ -22,6 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      version: ${{ steps.release.outputs.version }}
     env:
       DISTRIBUTION_REPOSITORIES: apt,homebrew-tap
     steps:
@@ -40,11 +42,13 @@ jobs:
           private-key: ${{ secrets.DISTRIBUTION_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ env.DISTRIBUTION_REPOSITORIES }}
-      - env:
+      - id: release
+        env:
           GH_TOKEN: ${{ github.token }}
         run: |
           shipped=$(basename build/dist/brew/gettoken-*.tar.gz .tar.gz)
           version=${shipped#gettoken-}
+          echo "version=$version" >> "$GITHUB_OUTPUT"
           gh release create "v$version" --target "$GITHUB_SHA" --title "v$version" \
             --notes "Built from $GITHUB_SHA by run $GITHUB_RUN_ID." \
             build/dist/deb/*.deb build/dist/brew/*.tar.gz build/dist/brew/*.rb
@@ -56,3 +60,30 @@ jobs:
             gh api "repos/$GITHUB_REPOSITORY_OWNER/$repo/dispatches" \
               -f event_type=release -f "client_payload[repository]=$GITHUB_REPOSITORY"
           done
+
+  integration:
+    name: ${{ matrix.name }}
+    needs: release
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: Debian published, os: ubuntu-latest, container: 'debian:testing-slim', platform: DEBIAN }
+          - { name: macOS published,  os: macos-latest,  container: '',                    platform: DARWIN }
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          source constants.env
+          add_archive="${{ matrix.platform }}_ADD_PUBLISHED_ARCHIVE"
+          bash -ec "${!add_archive}"
+      - run: |
+          source constants.env
+          wait_for_package="${{ matrix.platform }}_WAIT_FOR_PACKAGE"
+          VERSION="${{ needs.release.outputs.version }}" bash -ec "${!wait_for_package}"
+      - run: |
+          source constants.env
+          install_command="${{ matrix.platform }}_INSTALL_COMMAND"
+          remove_packages="${{ matrix.platform }}_REMOVE_PACKAGES"
+          BREW_TAP="$BREW_TAP" INSTALL_COMMAND="${!install_command}" REMOVE_PACKAGES="${!remove_packages}" bash src/integration-test/test.sh
