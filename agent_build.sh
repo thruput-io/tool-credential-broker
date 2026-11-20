@@ -35,7 +35,7 @@ what_a_clean_machine_gets "$built/debian" | docker run -i --rm -e ROOT_DIR=/work
     tar -C /work -xf -
     source /work/constants.env
     BREW_TAP="$BREW_TAP" bash -ec "$DEBIAN_ADD_ARCHIVE"
-    BREW_TAP="$BREW_TAP" INSTALL_COMMAND="$DEBIAN_INSTALL_COMMAND" REMOVE_PACKAGES="$DEBIAN_REMOVE_PACKAGES" bash /work/src/integration-test/test.sh'
+    BREW_TAP="$BREW_TAP" INSTALL_COMMAND="$DEBIAN_INSTALL_COMMAND" REMOVE_PACKAGES="$DEBIAN_REMOVE_PACKAGES" AS_AGENT="$DEBIAN_AS_AGENT" bash /work/src/integration-test/test.sh'
 
 if command -v macos-vm > /dev/null; then
   say "build on macOS, as the build macOS job does"
@@ -61,7 +61,7 @@ if command -v macos-vm > /dev/null; then
     export ROOT_DIR=\"\$HOME/gettoken\"
     source \"\$HOME/gettoken/constants.env\"
     BREW_TAP=\"\$BREW_TAP\" bash -ec \"\$DARWIN_ADD_ARCHIVE\"
-    BREW_TAP=\"\$BREW_TAP\" INSTALL_COMMAND=\"\$DARWIN_INSTALL_COMMAND\" REMOVE_PACKAGES=\"\$DARWIN_REMOVE_PACKAGES\" bash \"\$HOME/gettoken/src/integration-test/test.sh\""
+    BREW_TAP=\"\$BREW_TAP\" INSTALL_COMMAND=\"\$DARWIN_INSTALL_COMMAND\" REMOVE_PACKAGES=\"\$DARWIN_REMOVE_PACKAGES\" AS_AGENT=\"\$DARWIN_AS_AGENT\" bash \"\$HOME/gettoken/src/integration-test/test.sh\""
 fi
 
 say "everything the pipeline does before it releases, done here"
